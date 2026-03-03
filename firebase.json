@@ -22,6 +22,7 @@
   ],
   "hosting": {
     "public": "web/dist",
+    "predeploy": ["cd web && npm run build"],
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {

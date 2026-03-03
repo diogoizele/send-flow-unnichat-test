@@ -84,7 +84,7 @@ export const ConnectionsPage = () => {
   };
 
   return (
-    <Box>
+    <>
       <Box
         display="flex"
         justifyContent="space-between"
@@ -161,6 +161,6 @@ export const ConnectionsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };

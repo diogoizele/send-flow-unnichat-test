@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -14,6 +15,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useTheme,
 } from "@mui/material";
 import {
   Link as LinkIcon,
@@ -40,38 +42,62 @@ type LoggedLayoutProps = { children: React.ReactNode };
 export const LoggedLayout = ({ children }: LoggedLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
+  const theme = useTheme();
+
   const logout = useAuthStore((s) => s.logout);
-  const connections = useConnectionStore((s) => s.connections);
+
+  const user = useAuthStore((state) => state.user);
+  const connections = useConnectionStore((state) => state.connections);
   const selectedConnectionId = useConnectionStore(
-    (s) => s.selectedConnectionId,
+    (state) => state.selectedConnectionId,
   );
+
   const setSelectedConnectionId = useConnectionStore(
-    (s) => s.setSelectedConnectionId,
+    (state) => state.setSelectedConnectionId,
   );
-  const stopContactSubscribe = useContactStore((s) => s.stopSubscribe);
-  const stopMessageSubscribe = useMessageStore((s) => s.stopSubscribe);
+
+  const subscribeConnection = useConnectionStore((state) => state.subscribe);
+  const subscribeContact = useContactStore((state) => state.subscribe);
+  const subscribeMessage = useMessageStore((state) => state.subscribe);
+
+  const stopConnectionSubscribe = useConnectionStore(
+    (state) => state.stopSubscribe,
+  );
+  const stopContactSubscribe = useContactStore((state) => state.stopSubscribe);
+  const stopMessageSubscribe = useMessageStore((state) => state.stopSubscribe);
 
   const isConnectionContext =
     location.pathname === "/contacts" || location.pathname === "/messages";
 
   useEffect(() => {
-    if (!user?.uid) return;
-    useConnectionStore.getState().subscribe(user.uid);
-    return () => {
-      useConnectionStore.getState().stopSubscribe();
-    };
+    if (!user?.uid) {
+      return;
+    }
+
+    subscribeConnection(user.uid);
+
+    return stopConnectionSubscribe;
   }, [user?.uid]);
 
   useEffect(() => {
-    if (!user?.uid || !selectedConnectionId) return;
-    if (location.pathname === "/contacts") {
-      useContactStore.getState().subscribe(user.uid, selectedConnectionId);
-      return () => useContactStore.getState().stopSubscribe();
+    if (!user?.uid || !selectedConnectionId) {
+      return;
     }
+
+    if (location.pathname === "/contacts") {
+      subscribeContact(user.uid, selectedConnectionId);
+
+      return stopContactSubscribe;
+    }
+
     if (location.pathname === "/messages") {
-      useMessageStore.getState().subscribe(user.uid, selectedConnectionId);
-      return () => useMessageStore.getState().stopSubscribe();
+      subscribeContact(user.uid, selectedConnectionId);
+      subscribeMessage(user.uid, selectedConnectionId);
+
+      return () => {
+        stopContactSubscribe();
+        stopMessageSubscribe();
+      };
     }
   }, [user?.uid, selectedConnectionId, location.pathname]);
 
@@ -94,7 +120,7 @@ export const LoggedLayout = ({ children }: LoggedLayoutProps) => {
       >
         <Toolbar>
           <Typography variant="h6" noWrap component="span" sx={{ flexGrow: 1 }}>
-            Broadcast
+            Send Flow Unnichat - Broadcast
           </Typography>
           {isConnectionContext && (
             <FormControl
@@ -102,17 +128,34 @@ export const LoggedLayout = ({ children }: LoggedLayoutProps) => {
               sx={{ minWidth: 200, mr: 2 }}
               variant="outlined"
             >
-              <InputLabel id="connection-select-label">Conexão</InputLabel>
+              <InputLabel
+                id="connection-select-label"
+                sx={{ color: theme.palette.common.white }}
+              >
+                Conexão
+              </InputLabel>
               <Select
                 labelId="connection-select-label"
                 value={selectedConnectionId ?? ""}
                 onChange={(e) => handleConnectionChange(e.target.value)}
                 label="Conexão"
+                sx={{
+                  color: theme.palette.common.white,
+                  ".MuiOutlinedInput-notchedOutline": {
+                    borderColor: theme.palette.common.white,
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: theme.palette.common.white,
+                  },
+                  ".MuiSelect-icon": {
+                    color: theme.palette.common.white,
+                  },
+                }}
               >
                 <MenuItem value="">Selecione uma conexão</MenuItem>
-                {connections.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.name}
+                {connections.map(({ id, name }) => (
+                  <MenuItem key={id} value={id}>
+                    {name}
                   </MenuItem>
                 ))}
               </Select>

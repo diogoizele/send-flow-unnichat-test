@@ -22,23 +22,26 @@ const toContact = (id: string, data: Record<string, unknown>): Contact => ({
   connectionId: data.connectionId as string,
   name: data.name as string,
   phone: data.phone as string,
-  createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ?? (data.createdAt as string),
+  createdAt:
+    (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ??
+    (data.createdAt as string),
 });
 
 export const contactService = {
   subscribeByClientAndConnection: (
     clientId: string,
     connectionId: string,
-    onUpdate: (contacts: Contact[]) => void
+    onUpdate: (contacts: Contact[]) => void,
   ): Unsubscribe => {
     const q = query(
       collection(db, COLLECTION),
       where("clientId", "==", clientId),
       where("connectionId", "==", connectionId),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
     return onSnapshot(q, (snapshot) => {
       const contacts = snapshot.docs.map((d) => toContact(d.id, d.data()));
+
       onUpdate(contacts);
     });
   },
@@ -47,7 +50,7 @@ export const contactService = {
     clientId: string,
     connectionId: string,
     name: string,
-    phone: string
+    phone: string,
   ): Promise<string> => {
     const ref = await addDoc(collection(db, COLLECTION), {
       clientId,
@@ -65,7 +68,10 @@ export const contactService = {
     return toContact(snap.id, snap.data());
   },
 
-  update: async (id: string, data: { name: string; phone: string }): Promise<void> => {
+  update: async (
+    id: string,
+    data: { name: string; phone: string },
+  ): Promise<void> => {
     await updateDoc(doc(db, COLLECTION, id), data);
   },
 

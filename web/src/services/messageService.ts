@@ -24,22 +24,27 @@ const toMessage = (id: string, data: Record<string, unknown>): Message => ({
   connectionId: data.connectionId as string,
   contactIds: (data.contactIds as string[]) ?? [],
   text: data.text as string,
-  scheduledAt: typeof data.scheduledAt === "number" ? data.scheduledAt : (data.scheduledAt as { toMillis?: () => number })?.toMillis?.() ?? 0,
+  scheduledAt:
+    typeof data.scheduledAt === "number"
+      ? data.scheduledAt
+      : ((data.scheduledAt as { toMillis?: () => number })?.toMillis?.() ?? 0),
   status: (data.status as MessageStatus) ?? "scheduled",
-  createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ?? (data.createdAt as string),
+  createdAt:
+    (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ??
+    (data.createdAt as string),
 });
 
 export const messageService = {
   subscribeByClientAndConnection: (
     clientId: string,
     connectionId: string,
-    onUpdate: (messages: Message[]) => void
+    onUpdate: (messages: Message[]) => void,
   ): Unsubscribe => {
     const q = query(
       collection(db, COLLECTION),
       where("clientId", "==", clientId),
       where("connectionId", "==", connectionId),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
     return onSnapshot(q, (snapshot) => {
       const messages = snapshot.docs.map((d) => toMessage(d.id, d.data()));
@@ -52,10 +57,11 @@ export const messageService = {
     connectionId: string,
     contactIds: string[],
     text: string,
-    scheduledAt: number | null
+    scheduledAt: number | null,
   ): Promise<string> => {
     const now = Date.now();
-    const status: MessageStatus = scheduledAt == null || scheduledAt <= now ? "sent" : "scheduled";
+    const status: MessageStatus =
+      scheduledAt == null || scheduledAt <= now ? "sent" : "scheduled";
     const ref = await addDoc(collection(db, COLLECTION), {
       clientId,
       connectionId,
@@ -74,7 +80,10 @@ export const messageService = {
     return toMessage(snap.id, snap.data());
   },
 
-  update: async (id: string, data: Partial<Pick<Message, "text" | "scheduledAt" | "status">>): Promise<void> => {
+  update: async (
+    id: string,
+    data: Partial<Pick<Message, "text" | "scheduledAt" | "status">>,
+  ): Promise<void> => {
     await updateDoc(doc(db, COLLECTION, id), data as Record<string, unknown>);
   },
 

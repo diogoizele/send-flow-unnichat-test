@@ -25,12 +25,9 @@ export const Login = () => {
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     try {
-      const result = await login(data.email, data.password);
-
-      console.log({ result });
+      await login(data.email, data.password);
     } catch (error) {
       if (error instanceof FirebaseError) {
-        console.log({ error });
         switch (error.code) {
           case "auth/invalid-credential":
             showToast({ message: "Email ou senha inválidos", type: "error" });

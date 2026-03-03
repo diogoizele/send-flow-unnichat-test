@@ -8,9 +8,6 @@ import {
   FormControlLabel,
   Checkbox,
   List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Tabs,
   Tab,
@@ -20,7 +17,13 @@ import {
   InputLabel,
   Input,
   InputAdornment,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  ListItem,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
 import {
   Send as SendIcon,
   Delete as DeleteIcon,
@@ -42,11 +45,11 @@ const statusLabel: Record<Message["status"], string> = {
 };
 
 export const MessagesPage = () => {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((state) => state.user);
   const selectedConnectionId = useConnectionStore(
-    (s) => s.selectedConnectionId,
+    (state) => state.selectedConnectionId,
   );
-  const contacts = useContactStore((s) => s.contacts);
+  const contacts = useContactStore((state) => state.contacts);
   const { showToast } = useToast();
   const { messages, loading, createMessage, deleteMessage } = useMessageStore();
 
@@ -60,11 +63,27 @@ export const MessagesPage = () => {
   const filteredMessages = useMemo(() => {
     if (filterTab === "all") return messages;
     if (filterTab === "sent")
-      return messages.filter(
-        (m) => m.status === "sent" || m.status === "failed",
+      return messages.filter(({ status }) =>
+        ["sent", "failed"].includes(status),
       );
-    return messages.filter((m) => m.status === "scheduled");
+    return messages.filter(({ status }) => status === "scheduled");
   }, [messages, filterTab]);
+
+  const contactNames = useMemo(() => {
+    return messages.reduce(
+      (obj, message) => {
+        if (message)
+          obj[message.id] = message.contactIds.map(
+            (id) =>
+              contacts.find((contact) => contact.id === id)?.name ??
+              "Usuário desconhecido",
+          );
+
+        return obj;
+      },
+      {} as Record<string, string[]>,
+    );
+  }, [messages, contacts]);
 
   const toggleContact = (id: string) => {
     setSelectedContactIds((prev) => {
@@ -205,7 +224,7 @@ export const MessagesPage = () => {
       </Typography>
       <Tabs
         value={filterTab}
-        onChange={(_, v: FilterTab) => setFilterTab(v)}
+        onChange={(_, tab: FilterTab) => setFilterTab(tab)}
         sx={{ mb: 2 }}
       >
         <Tab label="Todas" value="all" />
@@ -225,33 +244,65 @@ export const MessagesPage = () => {
         </Typography>
       ) : (
         <List>
-          {filteredMessages.map((m) => (
-            <ListItem key={m.id} divider>
-              <ListItemText
-                primary={m.text}
-                secondary={
-                  <>
-                    <Chip
-                      size="small"
-                      label={statusLabel[m.status]}
-                      sx={{ mr: 0.5 }}
-                    />
-                    {m.status === "scheduled"
-                      ? `Agendada para ${formatDate(m.scheduledAt)}`
-                      : `Criada em ${m.createdAt}`}
-                  </>
-                }
-              />
-              <ListItemSecondaryAction>
-                <IconButton
-                  edge="end"
-                  onClick={() => handleDelete(m.id)}
-                  aria-label="excluir"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
+          {messages.map((message) => (
+            <Accordion key={message.id} disableGutters>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls={`panel-${message.id}-content`}
+                id={`panel-${message.id}-header`}
+              >
+                <ListItem key={message.id}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    width="100%"
+                  >
+                    <Box display="flex" flexDirection="column">
+                      <Typography variant="body1">{message.text}</Typography>
+                      <Box display="flex" alignItems="center" mt={0.5}>
+                        <Chip
+                          size="small"
+                          label={statusLabel[message.status]}
+                          sx={{ mr: 0.5 }}
+                        />
+                        <Typography variant="body2">
+                          {message.status === "scheduled"
+                            ? `Agendada para ${formatDate(message.scheduledAt)}`
+                            : `Criada em ${formatDate(new Date(message.createdAt).getTime())}`}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box display="flex" alignItems="center">
+                      <IconButton
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDelete(message.id);
+                        }}
+                        aria-label="excluir"
+                        size="small"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </ListItem>
+              </AccordionSummary>
+              <AccordionDetails>
+                {message.contactIds.length > 0 ? (
+                  <ul>
+                    {contactNames[message.id].map((id) => (
+                      <li key={id}>
+                        <Typography variant="body2">{id}</Typography>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <Typography variant="body2">Nenhum contato</Typography>
+                )}
+              </AccordionDetails>
+            </Accordion>
           ))}
         </List>
       )}
