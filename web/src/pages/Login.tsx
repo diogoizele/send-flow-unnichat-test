@@ -71,7 +71,7 @@ export const Login = () => {
         width="300px"
       >
         <TextField
-          label="Nome de usuário"
+          label="E-mail"
           {...register("email")}
           fullWidth
           error={!!errors.email}

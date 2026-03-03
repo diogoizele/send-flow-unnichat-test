@@ -17,10 +17,13 @@ type AuthState = {
     profile: UserProfile,
   ) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (
+    data: Partial<Pick<UserProfile, "name" | "companyId" | "role">>,
+  ) => Promise<void>;
   initAuthListener: () => void;
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   loading: false,
@@ -50,10 +53,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, profile: null });
   },
 
+  updateProfile: async (data) => {
+    const { user } = get();
+    if (!user?.uid || !get().profile) return;
+    await loginService.updateProfile(user.uid, data);
+    set({ profile: { ...get().profile!, ...data } });
+  },
+
   initAuthListener: () => {
     set({ loading: true });
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      set({ user: currentUser, loading: false });
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        set({ user: null, profile: null, loading: false });
+        return;
+      }
+      const profile = await loginService.getProfile(currentUser.uid);
+      set({ user: currentUser, profile, loading: false });
     });
     return unsubscribe;
   },

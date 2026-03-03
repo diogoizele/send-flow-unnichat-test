@@ -1,10 +1,13 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 
 import { Login } from "./pages/Login";
-import { Dashboard } from "./pages/Dashboard";
 import { Profile } from "./pages/Profile";
+import { ConnectionsPage } from "./pages/ConnectionsPage";
+import { ContactsPage } from "./pages/ContactsPage";
+import { MessagesPage } from "./pages/MessagesPage";
+import { LoggedLayout } from "./components/LoggedLayout";
 
 import { PrivateRoute } from "./routes/PrivateRoutes";
 import { PublicRoute } from "./routes/PublicRoutes";
@@ -45,10 +48,42 @@ const App = () => {
             }
           />
           <Route
-            path="/dashboard"
+            path="/"
             element={
               <PrivateRoute>
-                <Dashboard />
+                <LoggedLayout>
+                  <Navigate to="/connections" replace />
+                </LoggedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/connections"
+            element={
+              <PrivateRoute>
+                <LoggedLayout>
+                  <ConnectionsPage />
+                </LoggedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/contacts"
+            element={
+              <PrivateRoute>
+                <LoggedLayout>
+                  <ContactsPage />
+                </LoggedLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <PrivateRoute>
+                <LoggedLayout>
+                  <MessagesPage />
+                </LoggedLayout>
               </PrivateRoute>
             }
           />
@@ -56,18 +91,13 @@ const App = () => {
             path="/profile"
             element={
               <PrivateRoute>
-                <Profile />
+                <LoggedLayout>
+                  <Profile />
+                </LoggedLayout>
               </PrivateRoute>
             }
           />
-          <Route
-            path="*"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
