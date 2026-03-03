@@ -15,20 +15,26 @@ import type { Connection } from "../types/Connection";
 
 const COLLECTION = "connections";
 
-const toConnection = (id: string, data: Record<string, unknown>): Connection => ({
+const toConnection = (
+  id: string,
+  data: Record<string, unknown>,
+): Connection => ({
   id,
   clientId: data.clientId as string,
   name: data.name as string,
-  createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ?? (data.createdAt as string),
+  createdAt:
+    (data.createdAt as { toDate?: () => Date })?.toDate?.()?.toISOString?.() ??
+    (data.createdAt as string),
 });
 
 export const connectionService = {
-  subscribeByClientId: (clientId: string, onUpdate: (connections: Connection[]) => void): Unsubscribe => {
-    // Query only by clientId to avoid requiring a composite index (clientId + createdAt).
-    // We sort by createdAt in memory so the list works even before indexes are deployed.
+  subscribeByClientId: (
+    clientId: string,
+    onUpdate: (connections: Connection[]) => void,
+  ): Unsubscribe => {
     const q = query(
       collection(db, COLLECTION),
-      where("clientId", "==", clientId)
+      where("clientId", "==", clientId),
     );
     return onSnapshot(
       q,
@@ -45,7 +51,7 @@ export const connectionService = {
       (err) => {
         console.error("[connectionService] subscribe error:", err);
         onUpdate([]);
-      }
+      },
     );
   },
 
