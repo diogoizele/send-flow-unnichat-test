@@ -180,16 +180,26 @@ export const MessagesPage = () => {
           Selecione os contatos
         </Typography>
         <FormGroup row sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
-          {contacts.map((c) => (
+          {contacts.length === 0 && (
+            <>
+              <Typography color="text.secondary">
+                Você não possui contatos.
+              </Typography>
+              <Typography color="text.secondary">
+                Cadastre um contato para a conexão esta conexão!
+              </Typography>
+            </>
+          )}
+          {contacts.map(({ id, name }) => (
             <FormControlLabel
-              key={c.id}
+              key={id}
               control={
                 <Checkbox
-                  checked={selectedContactIds.has(c.id)}
-                  onChange={() => toggleContact(c.id)}
+                  checked={selectedContactIds.has(id)}
+                  onChange={() => toggleContact(id)}
                 />
               }
-              label={c.name}
+              label={name}
             />
           ))}
         </FormGroup>
