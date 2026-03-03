@@ -17,14 +17,11 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+      "predeploy": ["cd functions && bun install && npm run build"]
     }
   ],
   "hosting": {
-    "public": "public",
+    "public": "web/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
